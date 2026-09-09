@@ -1,0 +1,33 @@
+# Environment and Secrets
+.env
+.env.local
+*.env
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Python Cache & Build
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+
+# Executables, Downloads & Archives
+livekit-server.exe
+*.exe
+*.zip
+*.tar.gz
+
+# Logs & Recordings
+*.log
+console-recordings/
+
+# IDE & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
