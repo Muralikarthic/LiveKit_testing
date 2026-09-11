@@ -172,7 +172,10 @@ class Amanda(Agent):
             logger.error(f"Unexpected error in get_weather for '{loc_clean}': {e}", exc_info=True)
             return f"An unexpected error occurred while retrieving weather for '{loc_clean}'."
 
+from firestore_service import FirestoreService
+
 server = AgentServer()
+firestore_service = FirestoreService()
 
 @server.rtc_session(agent_name="amenda")
 async def entrypoint(ctx: agents.JobContext):
@@ -185,6 +188,23 @@ async def entrypoint(ctx: agents.JobContext):
             temperature=0.5
         ),
     )
+
+    @session.on("conversation_item_added")
+    def on_conversation_item_added(event):
+        item = event.item
+        from livekit.agents.llm import ChatMessage
+        if isinstance(item, ChatMessage) and item.role in ("user", "assistant"):
+            text = item.text_content.strip() if item.text_content else ""
+            if text:
+                asyncio.create_task(
+                    firestore_service.save_message(
+                        session_id=ctx.room.name,
+                        message_id=item.id,
+                        role=item.role,
+                        text=text,
+                        created_at_epoch=item.created_at,
+                    )
+                )
 
     await session.start(
         room=ctx.room,
