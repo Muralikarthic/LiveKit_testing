@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import asyncio
 import urllib.parse
@@ -6,6 +7,7 @@ import aiohttp
 from dotenv import load_dotenv
 from livekit import agents
 from livekit.agents import AgentServer, AgentSession, Agent
+from livekit.agents.llm.mcp import MCPServerStdio, MCPToolset
 from livekit.plugins import google
 
 load_dotenv(".env.local")
@@ -16,13 +18,22 @@ logger = logging.getLogger("amenda-agent")
 
 class Amanda(Agent):
     def __init__(self) -> None:
+        mcp_server = MCPServerStdio(
+            command=sys.executable,
+            args=["mcp_server.py"],
+        )
         super().__init__(
             instructions=(
                 "You are Amanda, a friendly and helpful voice AI assistant. "
                 "Respond naturally, warmly, and concisely. "
                 "If the user asks for weather information for any city or location, "
-                "use the get_weather tool to retrieve current weather details before responding."
-            )
+                "use the get_weather tool to retrieve current weather details before responding. "
+                "If the user asks for the current date or time in any location or timezone, "
+                "dynamically identify the standard IANA timezone for that location "
+                "(e.g., 'Asia/Kolkata' for India, 'Asia/Tokyo' for Japan, 'America/New_York' for New York) "
+                "and pass it as the timezone argument to the get_current_time tool."
+            ),
+            tools=[MCPToolset(id="amenda_mcp", mcp_server=mcp_server)],
         )
 
     @agents.function_tool(
